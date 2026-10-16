@@ -45,10 +45,15 @@ static void daemonize()
 }
 
 static volatile std::sig_atomic_t g_terminate = 0;
+static volatile std::sig_atomic_t g_reload = 0;
 
-static void handleSigterm(int)
+static void handleSignal(int sig)
 {
-    g_terminate = 1;
+    if (sig == SIGTERM) {
+        g_terminate = 1;
+    } else if (sig == SIGHUP) {
+        g_reload = 1;
+    }
 }
 
 int main()
@@ -58,12 +63,17 @@ int main()
     openlog("lab1_daemon", LOG_PID, LOG_DAEMON);
 
     struct sigaction sa {};
-    sa.sa_handler = handleSigterm;
+    sa.sa_handler = handleSignal;
     sigaction(SIGTERM, &sa, nullptr);
+    sigaction(SIGHUP, &sa, nullptr);
 
     syslog(LOG_INFO, "daemon started");
 
     while (!g_terminate) {
+        if (g_reload) {
+            g_reload = 0;
+            syslog(LOG_INFO, "SIGHUP received: reload config (stub)");
+        }
         syslog(LOG_INFO, "working...");
         sleep(5);
     }
