@@ -4,6 +4,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <csignal>
 
 static void daemonize()
 {
@@ -43,19 +44,31 @@ static void daemonize()
     dup2(0, 2);
 }
 
+static volatile std::sig_atomic_t g_terminate = 0;
+
+static void handleSigterm(int)
+{
+    g_terminate = 1;
+}
+
 int main()
 {
     daemonize();
 
     openlog("lab1_daemon", LOG_PID, LOG_DAEMON);
+
+    struct sigaction sa {};
+    sa.sa_handler = handleSigterm;
+    sigaction(SIGTERM, &sa, nullptr);
+
     syslog(LOG_INFO, "daemon started");
 
-    for (int i = 1; i <= 12; ++i) {
+    while (!g_terminate) {
+        syslog(LOG_INFO, "working...");
         sleep(5);
-        syslog(LOG_INFO, "tick %d", i);
     }
 
-    syslog(LOG_INFO, "daemon finished");
+    syslog(LOG_INFO, "SIGTERM received, daemon exiting");
     closelog();
     return 0;
 }
