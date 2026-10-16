@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <csignal>
+#include <climits>
+#include <string>
 
 static void daemonize()
 {
@@ -56,8 +58,20 @@ static void handleSignal(int sig)
     }
 }
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc != 2) {
+        std::fprintf(stderr, "usage: %s <config>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    char absPath[PATH_MAX];
+    if (realpath(argv[1], absPath) == nullptr) {
+        std::perror("realpath");
+        return EXIT_FAILURE;
+    }
+    const std::string configPath = absPath;
+
     daemonize();
 
     openlog("lab1_daemon", LOG_PID, LOG_DAEMON);
@@ -67,7 +81,7 @@ int main()
     sigaction(SIGTERM, &sa, nullptr);
     sigaction(SIGHUP, &sa, nullptr);
 
-    syslog(LOG_INFO, "daemon started");
+    syslog(LOG_INFO, "daemon started, config: %s", configPath.c_str());
 
     while (!g_terminate) {
         if (g_reload) {
