@@ -1,13 +1,17 @@
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <syslog.h>
 #include <unistd.h>
 
+#include <cerrno>
+#include <climits>
+#include <csignal>
 #include <cstdio>
 #include <cstdlib>
-#include <csignal>
-#include <climits>
-#include <string>
 #include <fstream>
+#include <string>
+
+// ---------- Демонизация ----------
 
 static void daemonize()
 {
@@ -47,6 +51,8 @@ static void daemonize()
     dup2(0, 2);
 }
 
+// ---------- Сигналы ----------
+
 static volatile std::sig_atomic_t g_terminate = 0;
 static volatile std::sig_atomic_t g_reload = 0;
 
@@ -58,6 +64,8 @@ static void handleSignal(int sig)
         g_reload = 1;
     }
 }
+
+// ---------- Конфиг ----------
 
 struct Config {
     std::string dir1;
@@ -91,7 +99,7 @@ static bool loadConfig(const std::string& path, Config& cfg, std::string& error)
         ++lineNo;
         line = trim(line);
         if (line.empty() || line[0] == '#') {
-            continue;  
+            continue;
         }
 
         std::size_t eq = line.find('=');
@@ -128,6 +136,51 @@ static bool loadConfig(const std::string& path, Config& cfg, std::string& error)
     return true;
 }
 
+// ---------- PID-файл ----------
+
+static const char* const kPidFile = "/tmp/lab1_daemon.pid";
+
+static pid_t readPidFile()
+{
+    std::ifstream in(kPidFile);
+    long pid = 0;
+    if (!(in >> pid) || pid <= 0) {
+        return 0;
+    }
+    return static_cast<pid_t>(pid);
+}
+
+static std::string processName(pid_t pid)
+{
+    std::ifstream in("/proc/" + std::to_string(pid) + "/comm");
+    std::string name;
+    std::getline(in, name);
+    return name;
+}
+
+static void stopPreviousInstance()
+{
+    pid_t old = readPidFile();
+    if (old == 0 || old == getpid()) {
+        return;
+    }
+    if (processName(old).empty() || processName(old) != processName(getpid())) {
+        return;
+    }
+    kill(old, SIGTERM);
+    for (int i = 0; i < 50 && !processName(old).empty(); ++i) {
+        usleep(100000);
+    }
+}
+
+static void writePidFile()
+{
+    std::ofstream out(kPidFile, std::ios::trunc);
+    out << getpid() << "\n";
+}
+
+// ---------- main ----------
+
 int main(int argc, char* argv[])
 {
     if (argc != 2) {
@@ -149,7 +202,9 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+    stopPreviousInstance();
     daemonize();
+    writePidFile();
 
     openlog("lab1_daemon", LOG_PID, LOG_DAEMON);
 
@@ -159,14 +214,12 @@ int main(int argc, char* argv[])
     sigaction(SIGHUP, &sa, nullptr);
 
     syslog(LOG_INFO, "daemon started, config: %s", configPath.c_str());
-
     syslog(LOG_INFO, "settings: dir1=%s dir2=%s interval=%d", config.dir1.c_str(),
-        config.dir2.c_str(), config.interval);
+           config.dir2.c_str(), config.interval);
 
     while (!g_terminate) {
         if (g_reload) {
             g_reload = 0;
-                        
             Config fresh;
             std::string err;
             if (loadConfig(configPath, fresh, err)) {
@@ -174,7 +227,8 @@ int main(int argc, char* argv[])
                 syslog(LOG_INFO, "config reloaded: dir1=%s dir2=%s interval=%d",
                        config.dir1.c_str(), config.dir2.c_str(), config.interval);
             } else {
-                syslog(LOG_ERR, "config reload failed: %s (keeping old settings)", err.c_str());
+                syslog(LOG_ERR, "config reload failed: %s (keeping old settings)",
+                       err.c_str());
             }
         }
         syslog(LOG_INFO, "working...");
@@ -182,6 +236,7 @@ int main(int argc, char* argv[])
     }
 
     syslog(LOG_INFO, "SIGTERM received, daemon exiting");
+    unlink(kPidFile);
     closelog();
     return 0;
 }
