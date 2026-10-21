@@ -10,6 +10,8 @@
 #include <cstdlib>
 #include <fstream>
 #include <string>
+#include <ctime>
+#include <filesystem>
 
 // ---------- Демонизация ----------
 
@@ -179,6 +181,38 @@ static void writePidFile()
     out << getpid() << "\n";
 }
 
+static bool appendHistory(const Config& cfg, std::string& error)
+{
+    namespace fs = std::filesystem;
+    std::error_code ec;
+
+    fs::directory_iterator it(cfg.dir1, ec);
+    if (ec) {
+        error = "cannot read " + cfg.dir1 + ": " + ec.message();
+        return false;
+    }
+
+    std::ofstream out(cfg.dir2 + "/hist.log", std::ios::app);
+    if (!out) {
+        error = "cannot open " + cfg.dir2 + "/hist.log";
+        return false;
+    }
+
+    char stamp[32];
+    std::time_t now = std::time(nullptr);
+    std::strftime(stamp, sizeof(stamp), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+    out << "[" << stamp << "]\n";
+
+    for (const fs::directory_entry& entry : it) {
+        out << "  " << entry.path().filename().string();
+        if (entry.is_directory(ec)) {
+            out << "/";
+        }
+        out << "\n";
+    }
+    return static_cast<bool>(out);
+}
+
 // ---------- main ----------
 
 int main(int argc, char* argv[])
@@ -231,7 +265,10 @@ int main(int argc, char* argv[])
                        err.c_str());
             }
         }
-        syslog(LOG_INFO, "working...");
+        std::string histError;
+        if (!appendHistory(config, histError)) {
+            syslog(LOG_ERR, "history failed: %s", histError.c_str());
+        }
         sleep(config.interval);
     }
 
