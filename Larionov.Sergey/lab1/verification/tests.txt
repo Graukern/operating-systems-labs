@@ -1,0 +1,30 @@
+Built diskmon (-std=c++17 -Wall -Wextra -Werror)
+PASS: singleton construction, identity, copy and move restrictions
+test_check_mode_and_overlapping_roots (__main__.DiskmonTests.test_check_mode_and_overlapping_roots) ... ok
+test_control_characters_cannot_forge_log_lines (__main__.DiskmonTests.test_control_characters_cannot_forge_log_lines) ... ok
+test_daemon_context_and_term (__main__.DiskmonTests.test_daemon_context_and_term) ... ok
+test_existing_recursive_tree (__main__.DiskmonTests.test_existing_recursive_tree) ... ok
+test_file_operations_and_local0 (__main__.DiskmonTests.test_file_operations_and_local0) ... ok
+test_invalid_empty_and_missing_configurations (__main__.DiskmonTests.test_invalid_empty_and_missing_configurations) ... ok
+test_invalid_pid_and_symlink_pid_file (__main__.DiskmonTests.test_invalid_pid_and_symlink_pid_file) ... ok
+test_invalid_reload_keeps_old_monitor (__main__.DiskmonTests.test_invalid_reload_keeps_old_monitor) ... ok
+test_invalid_start_does_not_stop_running_instance (__main__.DiskmonTests.test_invalid_start_does_not_stop_running_instance) ... ok
+test_moved_out_directory_no_longer_monitored (__main__.DiskmonTests.test_moved_out_directory_no_longer_monitored) ... ok
+test_multiple_roots_spaces_and_duplicate_elimination (__main__.DiskmonTests.test_multiple_roots_spaces_and_duplicate_elimination) ... ok
+test_new_directory_and_moved_in_tree (__main__.DiskmonTests.test_new_directory_and_moved_in_tree) ... ok
+test_rebuild_and_failed_build_cleanup (__main__.DiskmonTests.test_rebuild_and_failed_build_cleanup) ... ok
+test_renamed_directory_has_current_paths (__main__.DiskmonTests.test_renamed_directory_has_current_paths) ... ok
+test_repeated_reload_does_not_leak_descriptors (__main__.DiskmonTests.test_repeated_reload_does_not_leak_descriptors) ... ok
+test_repeated_start_replaces_old_process (__main__.DiskmonTests.test_repeated_start_replaces_old_process) ... ok
+test_root_deletion_is_reported (__main__.DiskmonTests.test_root_deletion_is_reported) ... ok
+test_root_rename_outside_and_recovery_by_hup (__main__.DiskmonTests.test_root_rename_outside_and_recovery_by_hup) ... ok
+test_sighup_uses_original_absolute_config_path (__main__.DiskmonTests.test_sighup_uses_original_absolute_config_path) ... ok
+test_simultaneous_launches_leave_one_instance (__main__.DiskmonTests.test_simultaneous_launches_leave_one_instance) ... ok
+test_stale_pid_after_sigkill (__main__.DiskmonTests.test_stale_pid_after_sigkill) ... ok
+test_symlink_directory_is_not_followed (__main__.DiskmonTests.test_symlink_directory_is_not_followed) ... ok
+test_unrelated_pid_is_never_signalled (__main__.DiskmonTests.test_unrelated_pid_is_never_signalled) ... ok
+
+----------------------------------------------------------------------
+Ran 23 tests in 6.037s
+
+OK

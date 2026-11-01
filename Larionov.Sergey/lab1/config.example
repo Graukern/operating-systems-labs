@@ -1,0 +1,4 @@
+# One directory per line, recursively watched. Spaces are literal; no quotes.
+# Relative paths are resolved against this file's directory.
+demo/watched
+demo/second

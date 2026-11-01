@@ -1,0 +1,40 @@
+$ ./diskmon monitor.conf diskmon.pid
+OK pid=694
+PASS: create, write, read, chmod, rename and delete reached /var/log/diskmon.log
+PASS: SIGHUP switched to the second directory
+PASS: invalid reload kept the previous watches
+$ ./diskmon monitor.conf diskmon.pid
+OK pid=697
+PASS: repeated launch stopped PID 694 and started PID 697
+PASS: SIGTERM logged shutdown and cleared the PID file
+
+Actual lines from /var/log/diskmon.log:
+2026-10-29T21:39:38.862993+03:00 DESKTOP-BABEQ68 diskmon[694]: START pid=694 config="/tmp/diskmon-demo-pnh6hcar/monitor.conf"
+2026-10-29T21:39:38.863827+03:00 DESKTOP-BABEQ68 diskmon[694]: event=CREATE path="/tmp/diskmon-demo-pnh6hcar/first/proof.txt" kind=file cookie=0
+2026-10-29T21:39:38.863892+03:00 DESKTOP-BABEQ68 diskmon[694]: event=OPEN path="/tmp/diskmon-demo-pnh6hcar/first/proof.txt" kind=file cookie=0
+2026-10-29T21:39:38.863923+03:00 DESKTOP-BABEQ68 diskmon[694]: event=MODIFY path="/tmp/diskmon-demo-pnh6hcar/first/proof.txt" kind=file cookie=0
+2026-10-29T21:39:38.863981+03:00 DESKTOP-BABEQ68 diskmon[694]: event=CLOSE_WRITE path="/tmp/diskmon-demo-pnh6hcar/first/proof.txt" kind=file cookie=0
+2026-10-29T21:39:38.864038+03:00 DESKTOP-BABEQ68 diskmon[694]: event=OPEN path="/tmp/diskmon-demo-pnh6hcar/first/proof.txt" kind=file cookie=0
+2026-10-29T21:39:38.864064+03:00 DESKTOP-BABEQ68 diskmon[694]: event=ACCESS path="/tmp/diskmon-demo-pnh6hcar/first/proof.txt" kind=file cookie=0
+2026-10-29T21:39:38.864123+03:00 DESKTOP-BABEQ68 diskmon[694]: event=CLOSE_NOWRITE path="/tmp/diskmon-demo-pnh6hcar/first/proof.txt" kind=file cookie=0
+2026-10-29T21:39:38.864171+03:00 DESKTOP-BABEQ68 diskmon[694]: event=ATTRIB path="/tmp/diskmon-demo-pnh6hcar/first/proof.txt" kind=file cookie=0
+2026-10-29T21:39:38.864202+03:00 DESKTOP-BABEQ68 diskmon[694]: event=MOVED_FROM path="/tmp/diskmon-demo-pnh6hcar/first/proof.txt" kind=file cookie=1991
+2026-10-29T21:39:38.864228+03:00 DESKTOP-BABEQ68 diskmon[694]: event=MOVED_TO path="/tmp/diskmon-demo-pnh6hcar/first/renamed.txt" kind=file cookie=1991
+2026-10-29T21:39:38.864254+03:00 DESKTOP-BABEQ68 diskmon[694]: event=DELETE path="/tmp/diskmon-demo-pnh6hcar/first/renamed.txt" kind=file cookie=0
+2026-10-29T21:39:38.865117+03:00 DESKTOP-BABEQ68 diskmon[694]: RELOAD_OK config="/tmp/diskmon-demo-pnh6hcar/monitor.conf"
+2026-10-29T21:39:38.890812+03:00 DESKTOP-BABEQ68 diskmon[694]: event=CREATE path="/tmp/diskmon-demo-pnh6hcar/second/after-reload.txt" kind=file cookie=0
+2026-10-29T21:39:38.890949+03:00 DESKTOP-BABEQ68 diskmon[694]: event=OPEN path="/tmp/diskmon-demo-pnh6hcar/second/after-reload.txt" kind=file cookie=0
+2026-10-29T21:39:38.891003+03:00 DESKTOP-BABEQ68 diskmon[694]: event=MODIFY path="/tmp/diskmon-demo-pnh6hcar/second/after-reload.txt" kind=file cookie=0
+2026-10-29T21:39:38.891056+03:00 DESKTOP-BABEQ68 diskmon[694]: event=CLOSE_WRITE path="/tmp/diskmon-demo-pnh6hcar/second/after-reload.txt" kind=file cookie=0
+2026-10-29T21:39:38.916866+03:00 DESKTOP-BABEQ68 diskmon[694]: RELOAD_FAILED keeping previous configuration: Invalid directory at line 1
+2026-10-29T21:39:38.942287+03:00 DESKTOP-BABEQ68 diskmon[694]: event=CREATE path="/tmp/diskmon-demo-pnh6hcar/second/after-invalid-reload.txt" kind=file cookie=0
+2026-10-29T21:39:38.942395+03:00 DESKTOP-BABEQ68 diskmon[694]: event=OPEN path="/tmp/diskmon-demo-pnh6hcar/second/after-invalid-reload.txt" kind=file cookie=0
+2026-10-29T21:39:38.942415+03:00 DESKTOP-BABEQ68 diskmon[694]: event=MODIFY path="/tmp/diskmon-demo-pnh6hcar/second/after-invalid-reload.txt" kind=file cookie=0
+2026-10-29T21:39:38.942459+03:00 DESKTOP-BABEQ68 diskmon[694]: event=CLOSE_WRITE path="/tmp/diskmon-demo-pnh6hcar/second/after-invalid-reload.txt" kind=file cookie=0
+2026-10-29T21:39:38.972529+03:00 DESKTOP-BABEQ68 diskmon[694]: STOP signal=15
+2026-10-29T21:39:38.972689+03:00 DESKTOP-BABEQ68 diskmon[697]: REPLACE previous_pid=694
+2026-10-29T21:39:38.992772+03:00 DESKTOP-BABEQ68 diskmon[697]: START pid=697 config="/tmp/diskmon-demo-pnh6hcar/monitor.conf"
+2026-10-29T21:39:38.993565+03:00 DESKTOP-BABEQ68 diskmon[697]: STOP signal=15
+
+PASS: journal confirmed SYSLOG_FACILITY=16 (LOG_LOCAL0) in 26 records
+END-TO-END DEMO PASSED

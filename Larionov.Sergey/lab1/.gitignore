@@ -1,0 +1,4 @@
+/diskmon
+/.build.*/
+/demo/
+/tests/__pycache__/
