@@ -1,0 +1,17 @@
+out/
+diskmon
+*.o
+*.a
+build/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+
+# Файлы IDE
+.vs/
+.vscode/
+.idea/
+
+# Файлы, которые создаёт сам демон при запуске
+*.pid
+*.log
