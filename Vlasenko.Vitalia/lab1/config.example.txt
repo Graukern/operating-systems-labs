@@ -1,0 +1,6 @@
+# Пример конфигурации. Пути без пробелов, относительно папки с конфигом.
+# В варианте №17 рабочий интервал — 60 секунд.
+interval=60
+
+# folder1 folder2 ext subfolder
+test_data/source test_data/destination .png IMAGES
