@@ -1,0 +1,9 @@
+/disk-monitor
+/disk-monitor.build.*
+/folder1/
+/folder2/
+/logs/
+/disk-monitor.pid
+/test-results/
+__pycache__/
+.DS_Store

@@ -1,0 +1,54 @@
+name: Nazarova lab1 Linux tests
+
+on:
+  push:
+    paths:
+      - 'Nazarova.Anastasiia/lab1/**'
+      - '.github/workflows/nazarova-lab1.yml'
+  pull_request:
+    paths:
+      - 'Nazarova.Anastasiia/lab1/**'
+      - '.github/workflows/nazarova-lab1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: Nazarova.Anastasiia/lab1
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ python3 rsyslog
+      - name: Configure LOG_LOCAL0
+        run: |
+          sudo install -m 644 rsyslog/30-disk-monitor.conf /etc/rsyslog.d/
+          sudo rsyslogd -N1
+          sudo systemctl restart rsyslog
+      - name: Build and test
+        env:
+          DISK_MONITOR_SYSLOG_LOG: /var/log/disk-monitor.log
+        run: |
+          mkdir -p test-results
+          set -o pipefail
+          sh tests/run_tests.sh 2>&1 | tee test-results/tests.txt
+      - name: Collect system log
+        if: always()
+        run: |
+          mkdir -p test-results
+          sudo cat /var/log/disk-monitor.log > test-results/disk-monitor.log || true
+      - name: Save logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nazarova-lab1-linux-results
+          path: Nazarova.Anastasiia/lab1/test-results/
+          retention-days: 14
