@@ -3,6 +3,7 @@
 #include "chat.h"
 
 #include <atomic>
+#include <chrono>
 #include <deque>
 #include <functional>
 #include <mutex>
@@ -17,6 +18,8 @@ public:
     void SetOnMessage(std::function<void(const Message &)> f);
     void SetOnStatus(std::function<void(const std::string &)> f);
 
+    void SetIdle(int timeout_ms, std::function<void()> f);
+
     void Start();
     void Stop();
     void Send(int type, const std::string &text);
@@ -26,12 +29,16 @@ private:
     void Loop();
     bool Flush();
     bool Receive();
+    bool Idle() const;
     void Status(const std::string &text);
 
     Conn &conn_;
     std::string name_;
     std::function<void(const Message &)> on_message_;
     std::function<void(const std::string &)> on_status_;
+    std::function<void()> on_idle_;
+    int idle_ms_ = 0;
+    std::chrono::steady_clock::time_point last_rx_;
     std::thread thread_;
     std::atomic<bool> active_{false};
     std::atomic<bool> stop_{false};

@@ -20,6 +20,12 @@ void ChatSession::SetOnStatus(std::function<void(const std::string &)> f)
     on_status_ = f;
 }
 
+void ChatSession::SetIdle(int timeout_ms, std::function<void()> f)
+{
+    idle_ms_ = timeout_ms;
+    on_idle_ = f;
+}
+
 void ChatSession::Status(const std::string &text)
 {
     if (on_status_)
@@ -29,6 +35,7 @@ void ChatSession::Status(const std::string &text)
 void ChatSession::Start()
 {
     active_ = true;
+    last_rx_ = std::chrono::steady_clock::now();
     thread_ = std::thread(&ChatSession::Loop, this);
 }
 
@@ -80,6 +87,7 @@ bool ChatSession::Receive()
             Status("собеседник вышел из чата");
             return false;
         }
+        last_rx_ = std::chrono::steady_clock::now();
         if (on_message_)
             on_message_(msg);
         return true;
@@ -90,11 +98,25 @@ bool ChatSession::Receive()
     return false;
 }
 
+bool ChatSession::Idle() const
+{
+    if (idle_ms_ <= 0)
+        return false;
+    auto passed = std::chrono::steady_clock::now() - last_rx_;
+    return std::chrono::duration_cast<std::chrono::milliseconds>(passed).count() > idle_ms_;
+}
+
 void ChatSession::Loop()
 {
     while (!stop_) {
         if (!Receive())
             break;
+        if (Idle()) {
+            Status("клиент долго молчит, отключаем");
+            if (on_idle_)
+                on_idle_();
+            break;
+        }
         if (!Flush()) {
             while (Receive() && !conn_.TimedOut()) {
             }

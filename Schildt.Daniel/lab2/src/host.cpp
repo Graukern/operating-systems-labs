@@ -9,6 +9,15 @@
 #include <sys/mman.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <cstdlib>
+
+static int idle_timeout_ms()
+{
+    const char *env = getenv("LAB2_IDLE_MS");
+    if (env && atoi(env) > 0)
+        return atoi(env);
+    return 60000;
+}
 
 static bool wait_ready(sem_t *sem)
 {
@@ -84,6 +93,7 @@ int main()
             printf("host: %s\n", s.c_str());
             fflush(stdout);
         });
+        session.SetIdle(idle_timeout_ms(), [child]() { kill(child, SIGKILL); });
         session.Start();
         session.Send(MSG_PUBLIC, "привет");
         int wait_left = 10;
