@@ -1,15 +1,16 @@
 #include "chat.h"
 #include "chat_client.h"
 #include "chat_session.h"
+#include "chat_window.h"
 
 #include <cerrno>
 #include <csignal>
 #include <cstdio>
+#include <cstdlib>
 #include <ctime>
 #include <sys/mman.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <cstdlib>
 
 static int idle_timeout_ms()
 {
@@ -42,7 +43,32 @@ static bool child_gone(pid_t pid)
     return waitpid(pid, nullptr, WNOHANG) == pid;
 }
 
-int main()
+static void run_console(ChatSession &session, pid_t child, bool &gone)
+{
+    session.SetOnMessage([](const Message &m) {
+        printf("host: %s\n", format_message(m).c_str());
+        fflush(stdout);
+    });
+    session.SetOnStatus([](const std::string &s) {
+        printf("host: %s\n", s.c_str());
+        fflush(stdout);
+    });
+    session.Start();
+    session.Send(MSG_PUBLIC, "привет");
+    int wait_left = 10;
+    while (session.Active() && wait_left > 0) {
+        if (gone || child_gone(child)) {
+            if (!gone)
+                printf("host: клиент завершился\n");
+            gone = true;
+            wait_left--;
+        }
+        usleep(100000);
+    }
+    session.Stop();
+}
+
+int main(int argc, char **argv)
 {
     void *mem = mmap(nullptr, sizeof(sem_t), PROT_READ | PROT_WRITE,
                      MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -85,28 +111,17 @@ int main()
     bool gone = false;
     {
         ChatSession session(conn, "host");
-        session.SetOnMessage([](const Message &m) {
-            printf("host: %s\n", format_message(m).c_str());
-            fflush(stdout);
-        });
-        session.SetOnStatus([](const std::string &s) {
-            printf("host: %s\n", s.c_str());
-            fflush(stdout);
-        });
         session.SetIdle(idle_timeout_ms(), [child]() { kill(child, SIGKILL); });
-        session.Start();
-        session.Send(MSG_PUBLIC, "привет");
-        int wait_left = 10;
-        while (session.Active() && wait_left > 0) {
-            if (gone || child_gone(child)) {
+        if (getenv("LAB2_NOGUI")) {
+            run_console(session, child, gone);
+        } else {
+            auto client_gone = [&gone, child]() {
                 if (!gone)
-                    printf("host: клиент завершился\n");
-                gone = true;
-                wait_left--;
-            }
-            usleep(100000);
+                    gone = child_gone(child);
+                return gone;
+            };
+            run_chat_window(argc, argv, session, client_gone);
         }
-        session.Stop();
     }
 
     for (int i = 0; i < 20 && !gone; i++) {
