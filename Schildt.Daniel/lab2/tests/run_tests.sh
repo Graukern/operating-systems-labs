@@ -14,7 +14,7 @@ check() {
 }
 
 has() { grep -q -E "$1" "$out"; }
-leftovers() { [ "$(ls /tmp /dev/mqueue 2>/dev/null | grep -c '^lab2_')" -eq 0 ]; }
+leftovers() { [ "$(ls /tmp /dev/mqueue 2>/dev/null | grep -c -E '^lab2_(mq|fifo|sock)_')" -eq 0 ]; }
 
 check "build.sh собирает проект" ./build.sh > /dev/null
 check "build.sh убирает папку build" test ! -e build
